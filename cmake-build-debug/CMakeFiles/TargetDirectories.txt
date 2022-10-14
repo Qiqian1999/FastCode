@@ -1,0 +1,3 @@
+/Users/qiqian/CLionProjects/FastCode/cmake-build-debug/CMakeFiles/FastCode.dir
+/Users/qiqian/CLionProjects/FastCode/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/qiqian/CLionProjects/FastCode/cmake-build-debug/CMakeFiles/rebuild_cache.dir
