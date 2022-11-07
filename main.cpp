@@ -1,4 +1,6 @@
 #include <iostream>
+#include <stdio.h>
+
 inline bool is_a_ge_zero_and_a_lt_b(int a, int b) {
     return static_cast<unsigned>(a) < static_cast<unsigned>(b);
 }
