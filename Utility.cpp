@@ -22,6 +22,12 @@ namespace Utility
         std::vector<std::vector<double> > matrix;
         std::ifstream inputFile(filename);
         std::string temp;
+        if(!inputFile.is_open()){
+            printf("fail to open file");
+            return Matrix();
+        }
+
+
 
         while (std::getline(inputFile, temp)) {
             std::istringstream buffer(temp);

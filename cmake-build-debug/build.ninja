@@ -52,8 +52,26 @@ build CMakeFiles/FastCode.dir/main.cpp.o: CXX_COMPILER__FastCode_Debug /Users/qi
   OBJECT_DIR = CMakeFiles/FastCode.dir
   OBJECT_FILE_DIR = CMakeFiles/FastCode.dir
 
-build CMakeFiles/FastCode.dir/karat.cpp.o: CXX_COMPILER__FastCode_Debug /Users/qiqian/CLionProjects/FastCode/karat.cpp || cmake_object_order_depends_target_FastCode
-  DEP_FILE = CMakeFiles/FastCode.dir/karat.cpp.o.d
+build CMakeFiles/FastCode.dir/Filters.cpp.o: CXX_COMPILER__FastCode_Debug /Users/qiqian/CLionProjects/FastCode/Filters.cpp || cmake_object_order_depends_target_FastCode
+  DEP_FILE = CMakeFiles/FastCode.dir/Filters.cpp.o.d
+  FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk -std=gnu++14
+  OBJECT_DIR = CMakeFiles/FastCode.dir
+  OBJECT_FILE_DIR = CMakeFiles/FastCode.dir
+
+build CMakeFiles/FastCode.dir/Matrix.cpp.o: CXX_COMPILER__FastCode_Debug /Users/qiqian/CLionProjects/FastCode/Matrix.cpp || cmake_object_order_depends_target_FastCode
+  DEP_FILE = CMakeFiles/FastCode.dir/Matrix.cpp.o.d
+  FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk -std=gnu++14
+  OBJECT_DIR = CMakeFiles/FastCode.dir
+  OBJECT_FILE_DIR = CMakeFiles/FastCode.dir
+
+build CMakeFiles/FastCode.dir/Tensor.cpp.o: CXX_COMPILER__FastCode_Debug /Users/qiqian/CLionProjects/FastCode/Tensor.cpp || cmake_object_order_depends_target_FastCode
+  DEP_FILE = CMakeFiles/FastCode.dir/Tensor.cpp.o.d
+  FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk -std=gnu++14
+  OBJECT_DIR = CMakeFiles/FastCode.dir
+  OBJECT_FILE_DIR = CMakeFiles/FastCode.dir
+
+build CMakeFiles/FastCode.dir/Utility.cpp.o: CXX_COMPILER__FastCode_Debug /Users/qiqian/CLionProjects/FastCode/Utility.cpp || cmake_object_order_depends_target_FastCode
+  DEP_FILE = CMakeFiles/FastCode.dir/Utility.cpp.o.d
   FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk -std=gnu++14
   OBJECT_DIR = CMakeFiles/FastCode.dir
   OBJECT_FILE_DIR = CMakeFiles/FastCode.dir
@@ -66,7 +84,7 @@ build CMakeFiles/FastCode.dir/karat.cpp.o: CXX_COMPILER__FastCode_Debug /Users/q
 #############################################
 # Link the executable FastCode
 
-build FastCode: CXX_EXECUTABLE_LINKER__FastCode_Debug CMakeFiles/FastCode.dir/main.cpp.o CMakeFiles/FastCode.dir/karat.cpp.o
+build FastCode: CXX_EXECUTABLE_LINKER__FastCode_Debug CMakeFiles/FastCode.dir/main.cpp.o CMakeFiles/FastCode.dir/Filters.cpp.o CMakeFiles/FastCode.dir/Matrix.cpp.o CMakeFiles/FastCode.dir/Tensor.cpp.o CMakeFiles/FastCode.dir/Utility.cpp.o
   FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
   OBJECT_DIR = CMakeFiles/FastCode.dir
   POST_BUILD = :
