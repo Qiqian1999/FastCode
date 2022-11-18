@@ -1,24 +1,39 @@
-#ifndef MATRIX_H
-#define MATRIX_H
+#ifndef DEF_MATRIX
+#define DEF_MATRIX
 
 #include <vector>
 #include <iostream>
+#include <stdexcept>
+#include "Utility.h"
 
 class Matrix
 {
 public:
 	Matrix();
-	Matrix(int rows, int columns, bool init=false);
-	Matrix(std::vector<std::vector<double> > const &array);
-	void set(int row, int column, double value);
-	double get(int row, int column);
-	int getRows() const {return rows;};
-	int getColumns() const {return columns;};
-	void pretty_print();
+	Matrix(int height, int width);
+    Matrix(int height, int width, int padding);
+	Matrix(std::vector<std::vector<double>> const &array);
+    Matrix(std::vector<std::vector<double>> const &array, int padding);
+	
+	//2D vector stores matrix
+	std::vector<std::vector<double>> matrix;
+
+	//functions
+	int getIndexValue(int i, int j) const;
+	int getHeight() const;
+	int getWidth() const;
+	int dotProduct(Matrix &other) const;
+	int getMax() const;
+	void checkIfEqual(Matrix &other) const;
+	void add(Matrix other);
+	void print() const;
+	Matrix filterSlide(Matrix filter, int stride, int bias);
+	Matrix maxSlide(int H, int F, int stride, int bias);
 private:
-	std::vector<std::vector<double> > array;
-	int rows;
-	int columns;
+	int height;
+	int width;
+	int padding;
+	void padMatrix();
 };
 
-#endif
+#endif 
