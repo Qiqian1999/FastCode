@@ -52,6 +52,12 @@ build CMakeFiles/FastCode.dir/main.cpp.o: CXX_COMPILER__FastCode_Debug /Users/qi
   OBJECT_DIR = CMakeFiles/FastCode.dir
   OBJECT_FILE_DIR = CMakeFiles/FastCode.dir
 
+build CMakeFiles/FastCode.dir/karat.cpp.o: CXX_COMPILER__FastCode_Debug /Users/qiqian/CLionProjects/FastCode/karat.cpp || cmake_object_order_depends_target_FastCode
+  DEP_FILE = CMakeFiles/FastCode.dir/karat.cpp.o.d
+  FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk -std=gnu++14
+  OBJECT_DIR = CMakeFiles/FastCode.dir
+  OBJECT_FILE_DIR = CMakeFiles/FastCode.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target FastCode
@@ -60,7 +66,7 @@ build CMakeFiles/FastCode.dir/main.cpp.o: CXX_COMPILER__FastCode_Debug /Users/qi
 #############################################
 # Link the executable FastCode
 
-build FastCode: CXX_EXECUTABLE_LINKER__FastCode_Debug CMakeFiles/FastCode.dir/main.cpp.o
+build FastCode: CXX_EXECUTABLE_LINKER__FastCode_Debug CMakeFiles/FastCode.dir/main.cpp.o CMakeFiles/FastCode.dir/karat.cpp.o
   FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk
   OBJECT_DIR = CMakeFiles/FastCode.dir
   POST_BUILD = :
