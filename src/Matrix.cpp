@@ -72,6 +72,19 @@ void Matrix::padMatrix()
     }
 }
 
+std::vector<std::vector<double>> Matrix::getPadMatrix(int padding)
+{
+    std::vector<std::vector<double>> padded_matrix(height+(2*padding), vector<double>(width+(2*padding), 0));
+
+    for (int i=padding; i<padded_matrix.size()-padding; i++){
+        for (int j=padding; j<padded_matrix[i].size()-padding; j++){
+            padded_matrix[i][j] = getIndexValue(i-padding, j-padding);
+        }
+    }
+
+	return padded_matrix;
+}
+
 void Matrix::checkIfEqual(Matrix &other) const
 {
 	if (height != other.getHeight()){
@@ -159,6 +172,53 @@ Matrix Matrix::filterSlide(Matrix filter, int stride, int bias)
 				for (int x=j; x<(j+F); x++){
 					//gets row of local region
 					row_local_region.push_back(matrix[y][x]); 	
+				}
+				//adds row of local region to local_region matrix
+				local_region.push_back(row_local_region);
+			}
+			//adds dot product of local region and filter to row of output  
+			row_output_layer.push_back( Matrix(local_region).dotProduct(filter) );
+		}
+		//adds row of output to output matrix
+		output_layer.push_back(row_output_layer);
+	}
+	Matrix output = Matrix(output_layer);
+	return output;
+}
+
+Matrix Matrix::filterSlide(Matrix filter, int stride, int bias, int padding)
+{
+	int F = filter.getWidth();
+	float f_W = (float)width;
+	float f_F = (float)F;
+	float f_S = (float)stride;
+	float f_P = (float)padding;
+	int output_size = ceil((f_W-f_F+2*f_P)/f_S)+1;
+
+	//checking if output Matrix will have size greater than 1
+	if (output_size < 1)
+		throw logic_error("Invalid: Output matrix size 0.");
+
+	std::vector<std::vector<double>> padded_matrix;
+    if (padding > 0) {
+        padded_matrix = getPadMatrix(padding);
+    } else {
+		padded_matrix = matrix;
+	}
+
+	vector<vector<double>> output_layer;
+
+	//goes through matrix and performs dot product on small local regions 
+	for (int i=0; i<=height-F+2*f_P; i+=stride){
+		vector<double> row_output_layer;
+		for (int j=0; j<=width-F+2*f_P; j+=stride){
+			vector<vector<double>> local_region;
+			//disgusting I know... creates a local region
+			for (int y=i; y<(i+F); y++){
+				vector<double> row_local_region;
+				for (int x=j; x<(j+F); x++){
+					//gets row of local region
+					row_local_region.push_back(padded_matrix[y][x]); 	
 				}
 				//adds row of local region to local_region matrix
 				local_region.push_back(row_local_region);

@@ -26,6 +26,7 @@ public:
 	void randomValueInit(int low, int high);
 	Matrix getLayer(int index) const;
 	Tensor fwdConv(Filters setOfFilters, int stride, int bias);
+	Tensor fwdConv(Filters setOfFilters, int stride, int bias, int padding);
 	Tensor fwdMaxPool(int pool_filter_height, int pool_filter_width, int stride, int bias);
 protected:
 	int height;

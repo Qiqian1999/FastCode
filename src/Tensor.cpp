@@ -109,6 +109,40 @@ Tensor Tensor::fwdConv(Filters setOfFilters, int stride, int bias)
 	return outputVolume;
 }
 
+Tensor Tensor::fwdConv(Filters setOfFilters, int stride, int bias, int padding)
+{
+	int F = setOfFilters.getWidth();
+	float f_W = (float)width;
+	float f_F = (float)F;
+	float f_S = (float)stride;
+	float f_P = (float)padding;
+	int output_size = ceil((f_W-f_F+2*f_P)/f_S)+1;
+
+	if (output_size < 1)
+		throw logic_error("Invalid: Output matrix size 0.");	
+	
+	Tensor outputVolume = Tensor(output_size, output_size);
+	
+	for (int filterNumber=0; filterNumber<setOfFilters.getNumberOfFilters(); filterNumber++) {
+		//temporarily doing addition of blank matrix in first iteration -- will fix later
+		Matrix result = Matrix(output_size, output_size);
+		for (int i=0; i<depth; i++){
+			result.add(layers[i].filterSlide(setOfFilters.getFilter(filterNumber).getLayer(i), stride, bias, padding));
+		}
+
+		if (bias > 0) {
+			vector<vector<double>> bias_filter(output_size, vector<double>(output_size, bias));
+			result.add(bias_filter);
+		}
+
+		cout << "Convolution->[Tensor layer]: " << filterNumber << endl;
+
+		outputVolume.addLayer(result);				
+	}
+
+	return outputVolume;
+}
+
 Tensor Tensor::fwdMaxPool(int pool_filter_height, int pool_filter_width, int stride, int bias)
 {
 	float f_W = (float)width;

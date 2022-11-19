@@ -28,12 +28,14 @@ public:
 	void add(Matrix other);
 	void print() const;
 	Matrix filterSlide(Matrix filter, int stride, int bias);
+	Matrix filterSlide(Matrix filter, int stride, int bias, int padding);
 	Matrix maxSlide(int H, int F, int stride, int bias);
 private:
 	int height;
 	int width;
 	int padding;
 	void padMatrix();
+	std::vector<std::vector<double>> getPadMatrix(int padding);
 };
 
 #endif 
