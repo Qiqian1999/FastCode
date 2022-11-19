@@ -1,0 +1,257 @@
+#include "Matrix.h"
+#include "Utility.h"
+#include <cmath>
+#include <x86intrin.h>
+#include <immintrin.h>
+#include <stdio.h>
+using namespace std;
+
+Matrix::Matrix(){}
+
+Matrix::Matrix(int height, int width)
+{
+	this->height = height;
+	this->width = width;
+	this->padding = 0;
+	this->matrix = vector<vector<double> > (height, vector<double>(width));
+}
+
+Matrix::Matrix(int height, int width, int padding)
+{
+    this->height = height;
+    this->width = width;
+    this->padding = padding;
+    this->matrix = vector<vector<double> > (height, vector<double>(width));
+
+    if (padding > 0) {
+        padMatrix();
+    }
+}
+
+Matrix::Matrix(vector<vector<double> > const &matrix)
+{
+	this->height = matrix.size();
+	this->width = matrix[0].size();
+	this->padding = 0;
+	this->matrix = matrix;
+}
+
+Matrix::Matrix(vector<vector<double> > const &matrix, int padding)
+{
+    this->height = matrix.size();
+    this->width = matrix[0].size();
+    this->padding = padding;
+    this->matrix = matrix;
+
+    if (padding > 0) {
+        padMatrix();
+    }
+}
+
+int Matrix::getHeight() const
+{
+	return height;
+}
+
+int Matrix::getWidth() const
+{
+	return width;
+}
+
+int Matrix::getIndexValue(int i, int j) const
+{
+	return matrix[i][j];
+}
+
+void Matrix::padMatrix()
+{
+    vector<vector<double> > padded_matrix(height+(2*padding), vector<double>(width+(2*padding), 0));
+
+    for (int i=padding; i<padded_matrix.size()-padding; i++){
+        for (int j=padding; j<padded_matrix[i].size()-padding; j++){
+            padded_matrix[i][j] = getIndexValue(i-padding, j-padding);
+        }
+    }
+}
+
+void Matrix::checkIfEqual(Matrix &other) const
+{
+	if (height != other.getHeight()){
+		cout << height << endl;
+		cout << other.getHeight() << endl;
+		throw logic_error("Heights of matrices are not the same.");
+	}
+	
+	if (width != other.getWidth()){
+		cout << width << endl;
+		cout << other.getWidth() << endl;
+		throw logic_error("Width of matrices are not the same.");
+	}
+}
+
+int Matrix::dotProduct(Matrix &other) const
+{
+	checkIfEqual(other);
+
+	int product = 0;
+
+	for (int i=0; i<height; i++){
+		for (int j=0; j<width; j++){
+			product += (matrix[i][j] * other.getIndexValue(i, j));
+		}
+	}
+
+	return product;
+}
+
+int Matrix::getMax() const
+{	
+	int max = 0;
+
+	for (int i=0; i<height; i++){
+		for (int j=0; j<width; j++){
+			if (matrix[i][j] > max)
+				max = matrix[i][j];
+		}
+	}
+
+	return max;
+}
+
+void Matrix::add(Matrix other)
+{
+	checkIfEqual(other);
+
+	vector<vector<double> > result; 
+
+	for (int i=0; i<height; i++){
+		vector<double> row_result;
+		for (int j=0; j<width; j++){
+			row_result.push_back( matrix[i][j] + other.getIndexValue(i, j));
+		}
+		result.push_back(row_result);
+	}
+
+	matrix = result;
+}
+
+Matrix Matrix::filterSlide(Matrix filter, int stride, int bias)
+{
+	int F = filter.getWidth();
+	float f_W = (float)width;
+	float f_F = (float)F;
+	float f_S = (float)stride;
+	int output_size = ceil((f_W-f_F)/f_S)+1;
+
+	//checking if output Matrix will have size greater than 1
+	if (output_size < 1)
+		throw logic_error("Invalid: Output matrix size 0.");
+	
+	vector<vector<double> > output_layer;
+
+	//goes through matrix and performs dot product on small local regions 
+	for (int i=0; i<=height-F; i+=stride){
+		vector<double> row_output_layer;
+		for (int j=0; j<=width-F; j+=stride){
+
+			vector<vector<double> > local_region;
+			//disgusting I know... creates a local region
+			for (int y=i; y<(i+F); y++){
+				vector<double> row_local_region;
+				for (int x=j; x<(j+F); x++){
+					//gets row of local region
+					row_local_region.push_back(matrix[y][x]); 	
+				}
+				//adds row of local region to local_region matrix
+				local_region.push_back(row_local_region);
+			}
+			//adds dot product of local region and filter to row of output  
+			row_output_layer.push_back( Matrix(local_region).dotProduct(filter) );
+		}
+		//adds row of output to output matrix
+		output_layer.push_back(row_output_layer);
+	}
+	Matrix output = Matrix(output_layer);
+	return output;
+}
+Matrix Matrix::filterSlideSimd(Matrix filter1, Matrix filter2, Matrix filter3, Matrix filter4, int stride, int bias) {
+    int F = filter1.getWidth();
+    float f_W = (float)width;
+    float f_F = (float)F;
+    float f_S = (float)stride;
+    int output_size = ceil((f_W-f_F)/f_S)+1;
+
+    //checking if output Matrix will have size greater than 1
+    if (output_size < 1)
+        throw logic_error("Invalid: Output matrix size 0.");
+
+    vector<vector<double> > output_layer;
+    for(int start_x = 0; start_x <= height- F; start_x+= stride){
+        for(int start_y = 0; start_y <= width - F; start_y += stride){
+            double* result = singleElement(filter1,filter2,filter3,filter3,start_x,start_y);
+            //printf();
+        }
+    }
+
+}
+double* Matrix::singleElement(Matrix filter1, Matrix filter2, Matrix filter3, Matrix filter4, int startX,
+                                          int startY) {
+    __m256d c = _mm256_set_pd(0,0,0,0);
+    int F = filter1.getWidth();
+    double* ans = new double [4];
+    for(int i = 0; i < F; i ++){
+        for(int j = 0; j < F; j ++){
+            __m256d a = _mm256_set_pd(filter1.getIndexValue(i,j),filter2.getIndexValue(i,j),filter3.getIndexValue(i,j),filter4.getIndexValue(i,j));
+            double num = matrix[i][j];
+            __m256d b = _mm256_broadcast_sd(&matrix[startX+i][startY+j]);
+
+            _mm256_fmadd_pd(a, b ,c);
+        }
+    }
+    _mm256_store_pd(ans, c);
+}
+Matrix Matrix::maxSlide(int H, int F, int stride, int bias)
+{
+	//for now H isn't use since the filters are always squares... keeping it here for now... if I want to do rectangular stuff
+	
+	float f_W = (float)width;
+	float f_F = (float)F;
+	float f_S = (float)stride;
+	int output_size = ceil((f_W-f_F)/f_S)+1;
+
+	//checking if output Matrix will have size greater than 1
+	if (output_size < 1)
+		throw logic_error("Invalid: Output matrix size 0.");
+	
+	vector<vector<double> > output_layer;
+
+	//goes through matrix and performs max pool on small local regions 
+	for (int i=0; i<=height-F; i+=stride){
+	    vector<double> row_output_layer;
+
+		for (int j=0; j<=width-F; j+=stride){
+			vector<vector<double> > local_region;
+			//creates a local region
+			for (int y=i; y<(i+F); y++){
+				vector<double> row_local_region;
+				for (int x=j; x<(j+F); x++){
+					//gets row of local region
+					row_local_region.push_back(matrix[y][x]); 	
+				}
+				//adds row of local region to local_region matrix
+				local_region.push_back(row_local_region);
+			}
+			//max pool on local region  
+			row_output_layer.push_back(Matrix(local_region).getMax());
+		}
+		//adds row of output to output matrix
+		output_layer.push_back(row_output_layer);
+	}
+	Matrix output = Matrix(output_layer);
+	return output;
+}
+
+void Matrix::print() const
+{
+	Utility::printVec(matrix);
+}
