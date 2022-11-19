@@ -123,6 +123,8 @@ void test_7x7_Conv() {
     cout << "---- Test [Fwd Convolution] ----" << endl;
 
     Tensor conv_layer_2 = conv_layer_1.fwdConv(kernel_1, 2, 0);
+    conv_layer_1.SIMD(kernel_1,2,0);
+    Tensor conv_layer_2_test = conv_layer_1.SIMD(kernel_1, 2, 0);
     cout << "\n[Input volume]: 7x7x3 --> Convolution (filter: 3x3x3 * 16 @ stride=2) --> [Output volume]: "
          << conv_layer_2.getHeight() << "x"
          << conv_layer_2.getWidth() << "x"

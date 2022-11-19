@@ -1,7 +1,9 @@
 #include "Matrix.h"
 #include "Utility.h"
 #include <cmath>
-
+#include <x86intrin.h>
+#include <immintrin.h>
+#include <stdio.h>
 using namespace std;
 
 Matrix::Matrix(){}
@@ -172,7 +174,42 @@ Matrix Matrix::filterSlide(Matrix filter, int stride, int bias)
 	Matrix output = Matrix(output_layer);
 	return output;
 }
+Matrix Matrix::filterSlideSimd(Matrix filter1, Matrix filter2, Matrix filter3, Matrix filter4, int stride, int bias) {
+    int F = filter1.getWidth();
+    float f_W = (float)width;
+    float f_F = (float)F;
+    float f_S = (float)stride;
+    int output_size = ceil((f_W-f_F)/f_S)+1;
 
+    //checking if output Matrix will have size greater than 1
+    if (output_size < 1)
+        throw logic_error("Invalid: Output matrix size 0.");
+
+    vector<vector<double>> output_layer;
+    for(int start_x = 0; start_x <= height- F; start_x+= stride){
+        for(int start_y = 0; start_y <= width - F; start_y += stride){
+            double* result = singleElement(filter1,filter2,filter3,filter3,start_x,start_y);
+            printf();
+        }
+    }
+
+}
+double* Matrix::singleElement(Matrix filter1, Matrix filter2, Matrix filter3, Matrix filter4, int startX,
+                                          int startY) {
+    __m256d c = _mm256_set_pd(0,0,0,0);
+    int F = filter1.getWidth();
+    double* ans = new double [4];
+    for(int i = 0; i < F; i ++){
+        for(int j = 0; j < F; j ++){
+            __m256d a = _mm256_set_pd(filter1.getIndexValue(i,j),filter2.getIndexValue(i,j),filter3.getIndexValue(i,j),filter4.getIndexValue(i,j));
+            double num = matrix[i][j];
+            __m256d b = _mm256_broadcast_sd(&matrix[startX+i][startY+j]);
+
+            _mm256_fmadd_pd(a, b ,c);
+        }
+    }
+    _mm256_store_pd(ans, c);
+}
 Matrix Matrix::maxSlide(int H, int F, int stride, int bias)
 {
 	//for now H isn't use since the filters are always squares... keeping it here for now... if I want to do rectangular stuff

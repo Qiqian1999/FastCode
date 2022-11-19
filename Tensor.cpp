@@ -5,6 +5,7 @@
 #include "Filters.h"
 #include "Tensor.h"
 
+
 using namespace std;
 
 Tensor::Tensor(){}
@@ -107,6 +108,39 @@ Tensor Tensor::fwdConv(Filters setOfFilters, int stride, int bias)
 	}
 
 	return outputVolume;
+}
+Tensor Tensor::SIMD(Filters setOfFilters, int stride, int bias){
+    int F = setOfFilters.getWidth();
+    float f_W = (float)width;
+    float f_F = (float)F;
+    float f_S = (float)stride;
+    int output_size = ceil((f_W-f_F)/f_S)+1;
+
+    if (output_size < 1)
+        throw logic_error("Invalid: Output matrix size 0.");
+
+    Tensor outputVolume = Tensor(output_size, output_size);
+
+
+    int filterNum = setOfFilters.getNumberOfFilters();
+
+    for (int filterNumber=0; filterNumber<filterNum; filterNumber +=4) {
+        //temporarily doing addition of blank matrix in first iteration -- will fix later
+
+
+        for (int i=0; i<depth; i++){
+            layers[i].filterSlideSimd(setOfFilters.getFilter(filterNumber).getLayer(depth),setOfFilters.getFilter(filterNumber+1).getLayer(depth),setOfFilters.getFilter(filterNumber+2).getLayer(depth),setOfFilters.getFilter(filterNumber+3).getLayer(depth),stride,bias);
+
+        }
+
+        cout << "Convolution->[Tensor layer]: " << filterNumber << endl;
+
+
+    }
+
+    return outputVolume;
+
+
 }
 
 Tensor Tensor::fwdMaxPool(int pool_filter_height, int pool_filter_width, int stride, int bias)
