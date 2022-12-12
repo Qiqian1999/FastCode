@@ -127,7 +127,9 @@ Tensor Tensor::fwdConv(Filters setOfFilters, int stride, int bias, int padding)
         //temporarily doing addition of blank matrix in first iteration -- will fix later
         Matrix result = Matrix(output_size, output_size);
         for (int i=0; i<depth; i++){
-            result.add(layers[i].filterSlide(setOfFilters.getFilter(filterNumber).getLayer(i), stride, bias, padding));
+            Matrix filter = setOfFilters.getFilter(filterNumber).getLayer(i);
+			Matrix result_depth_i = layers[i].filterSlide(filter, stride, bias, padding);
+            result.add(result_depth_i);
         }
 
         if (bias > 0) {
