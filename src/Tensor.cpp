@@ -135,8 +135,6 @@ Tensor Tensor::fwdConv(Filters setOfFilters, int stride, int bias, int padding)
             result.add(bias_filter);
         }
 
-        cout << "Convolution->[Tensor layer]: " << filterNumber << endl;
-
         outputVolume.addLayer(result);                
     }
 
