@@ -189,7 +189,9 @@ Matrix Matrix::filterSlide(Matrix filter, int stride, int bias)
                 local_region.push_back(row_local_region);
             }
             //adds dot product of local region and filter to row of output  
-            row_output_layer.push_back( Matrix(local_region).dotProduct(filter) );
+            double output = Matrix(local_region).dotProduct(filter);
+
+            row_output_layer.push_back(output);
         }
         //adds row of output to output matrix
         output_layer.push_back(row_output_layer);
