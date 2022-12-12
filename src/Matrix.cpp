@@ -2,7 +2,19 @@
 #include "Utility.h"
 #include <cmath>
 
+#include <x86intrin.h>
+#include <immintrin.h>
+
+#define MAX_FREQ 3.4
+#define BASE_FREQ 2.4
+
 using namespace std;
+
+static __inline__ unsigned long long rdtsc(void) {
+    unsigned hi, lo;
+    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
+}
 
 Matrix::Matrix(){}
 
@@ -209,6 +221,8 @@ Matrix Matrix::filterSlide(Matrix filter, int stride, int bias, int padding)
 	vector<vector<double>> output_layer;
 
 	//goes through matrix and performs dot product on small local regions 
+    unsigned long long t0, t1;
+    t0 = rdtsc();
 	for (int i=0; i<=height-F+2*f_P; i+=stride){
 		vector<double> row_output_layer;
 		for (int j=0; j<=width-F+2*f_P; j+=stride){
@@ -229,6 +243,10 @@ Matrix Matrix::filterSlide(Matrix filter, int stride, int bias, int padding)
 		//adds row of output to output matrix
 		output_layer.push_back(row_output_layer);
 	}
+    t1 = rdtsc();
+
+	printf("TURBO Cycles Taken for SIMD_FMA: %lf\n\r", (double)(t1-t0)*MAX_FREQ/BASE_FREQ);
+
 	Matrix output = Matrix(output_layer);
 	return output;
 }
