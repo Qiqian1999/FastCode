@@ -19,9 +19,9 @@ void test_224x224_Conv() {
 
     // 224x224x3 input layer
     Tensor data_layer = Tensor(224, 224);
-    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_224X224"));
-    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_224X224"));
-    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_224X224"));
+    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_224x224"));
+    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_224x224"));
+    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_224x224"));
 
     // // 3x3x3 x 64 filters
     Filters kernel_conv1_1 = Filters(3, 3, 3, 64);
