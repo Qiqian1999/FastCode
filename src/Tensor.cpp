@@ -155,21 +155,31 @@ Tensor Tensor::fwdConv(Filters setOfFilters, int stride, int bias, int padding)
     return outputVolume;
 }
 
-double Tensor::kernel(double* A, double* B, int y, int x, int z, int F, int f_W_padded)
+double Tensor::kernel(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters)
 {
-    double output = 0;
+    unsigned long long t0, t1;
+    t0 = rdtsc();
+    for (int y = 0; y < output_size; y++) {
+        for (int x = 0; x < output_size; x++) {
+            for (int z = 0; z < numberOfFilters; z++) {
+                double output = 0;
 
-    for (int k = 0; k < depth; k++) {
-        for (int i = y; i < (y+F); i++) {
-            for (int j = x; j < (x+F); j++) {
-                double a = A[f_W_padded*f_W_padded*k + f_W_padded*i + j];
-                double b = B[F*F*depth*z + F*F*k + F*(i-y) + (j-x)];
-                output += a*b;
+                for (int k = 0; k < depth; k++) {
+                    for (int i = y; i < (y+F); i++) {
+                        for (int j = x; j < (x+F); j++) {
+                            double a = A[f_W_padded*f_W_padded*k + f_W_padded*i + j];
+                            double b = B[F*F*depth*z + F*F*k + F*(i-y) + (j-x)];
+                            output += a*b;
+                        }
+                    }
+                }
+
+                C[numberOfFilters*output_size*y + numberOfFilters*x + z] = output;
             }
         }
     }
-
-    return output;
+    t1 = rdtsc();
+    printf("TURBO Cycles Taken for Baseline: %lf\n\r", (double)(t1-t0)*MAX_FREQ/BASE_FREQ);
 }
 
 Tensor Tensor::fwdConv_baseline(Filters setOfFilters, int stride, int bias, int padding)
@@ -221,20 +231,10 @@ Tensor Tensor::fwdConv_baseline(Filters setOfFilters, int stride, int bias, int 
         }
     }
 
-    unsigned long long t0, t1;
-
     // C
     double* flatten_output_tensor = new double[output_size*output_size*numberOfFilters]; // 224x224x64
-    t0 = rdtsc();
-    for (int y = 0; y < output_size; y++) {
-        for (int x = 0; x < output_size; x++) {
-            for (int z = 0; z < numberOfFilters; z++) {
-                flatten_output_tensor[numberOfFilters*output_size*y + numberOfFilters*x + z] = kernel(inputs, filters, y, x, z, F, f_W_padded);
-            }
-        }
-    }
-    t1 = rdtsc();
-    printf("TURBO Cycles Taken for Baseline: %lf\n\r", (double)(t1-t0)*MAX_FREQ/BASE_FREQ);
+
+    kernel(flatten_output_tensor, inputs, filters, F, f_W_padded, output_size, numberOfFilters);
 
     // unpack C
     for (int z = 0; z < numberOfFilters; z++) {
