@@ -31,6 +31,7 @@ void test_224x224_Conv() {
 
     Tensor conv1_1_layer = data_layer.fwdConv(kernel_conv1_1, stride, bias, padding);
     Tensor conv1_1_layer_baseline = data_layer.fwdConv_baseline(kernel_conv1_1, stride, bias, padding); // TURBO Cycles Taken for Baseline: 186363473.250000
+    Tensor conv1_1_layer_simd = data_layer.fwdConv_simd(kernel_conv1_1, stride, bias, padding); // 
 
     cout << "conv1_1_layer output: " << endl;
     conv1_1_layer.getLayer(3).print();
@@ -39,6 +40,10 @@ void test_224x224_Conv() {
     cout << "conv1_1_layer_baseline output: " << endl;
     conv1_1_layer_baseline.getLayer(3).print();
     cout << "== end conv1_1_layer_baseline output: " << endl;
+
+    cout << "conv1_1_layer_simd output: " << endl;
+    conv1_1_layer_simd.getLayer(3).print();
+    cout << "== end conv1_1_layer_simd output: " << endl;
 
     cout << "\n[Input volume]: 224x224x3 --> Convolution (filter: 3x3x3 * 64 @ stride=1, padding=1) --> [Output volume]: "
          << conv1_1_layer.getHeight() << "x"
