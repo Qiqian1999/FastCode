@@ -28,6 +28,10 @@ public:
 	Tensor fwdConv(Filters setOfFilters, int stride, int bias);
 	Tensor fwdConv(Filters setOfFilters, int stride, int bias, int padding);
 	Tensor fwdMaxPool(int pool_filter_height, int pool_filter_width, int stride, int bias);
+
+	double kernel(double A[], double B[], int y, int x, int z, int F, int f_W_padded);
+	Tensor fwdConv_baseline(Filters setOfFilters, int stride, int bias, int padding);
+
 protected:
 	int height;
 	int width;

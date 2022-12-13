@@ -18,10 +18,10 @@ void test_224x224_Conv() {
     int bias = 0;
 
     // 224x224x3 input layer
-    Tensor data_layer = Tensor(224, 224);
-    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_224x224"));
-    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_224x224"));
-    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_224x224"));
+    Tensor data_layer = Tensor(64, 64);
+    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_64x64"));
+    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_64x64"));
+    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_64x64"));
 
     // // 3x3x3 x 64 filters
     Filters kernel_conv1_1 = Filters(3, 3, 3, 64);
@@ -30,6 +30,16 @@ void test_224x224_Conv() {
     cout << "---- Test [Fwd Convolution] ----" << endl;
 
     Tensor conv1_1_layer = data_layer.fwdConv(kernel_conv1_1, stride, bias, padding);
+    Tensor conv1_1_layer_baseline = data_layer.fwdConv_baseline(kernel_conv1_1, stride, bias, padding); // TURBO Cycles Taken for Baseline: 186363473.250000
+
+    cout << "conv1_1_layer output: " << endl;
+    conv1_1_layer.getLayer(3).print();
+    cout << "== end conv1_1_layer output: " << endl;
+
+    cout << "conv1_1_layer_baseline output: " << endl;
+    conv1_1_layer_baseline.getLayer(3).print();
+    cout << "== end conv1_1_layer_baseline output: " << endl;
+
     cout << "\n[Input volume]: 224x224x3 --> Convolution (filter: 3x3x3 * 64 @ stride=1, padding=1) --> [Output volume]: "
          << conv1_1_layer.getHeight() << "x"
          << conv1_1_layer.getWidth() << "x"
@@ -58,7 +68,8 @@ void test_224x224_Conv() {
 }
 
 int main(int argc, char* argv[]) {
-    srand(time(0)); //used for setting random values for filters
+    // srand(time(0)); //used for setting random values for filters
+    srand(1); //used for setting random values for filters
     test_224x224_Conv();
     return 0;
 }	

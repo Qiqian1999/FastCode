@@ -5,6 +5,18 @@
 #include "Filters.h"
 #include "Tensor.h"
 
+#include <x86intrin.h>
+#include <immintrin.h>
+
+#define MAX_FREQ 3.4
+#define BASE_FREQ 2.4
+
+static __inline__ unsigned long long rdtsc(void) {
+    unsigned hi, lo;
+    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
+}
+
 using namespace std;
 
 Tensor::Tensor(){}
@@ -128,7 +140,7 @@ Tensor Tensor::fwdConv(Filters setOfFilters, int stride, int bias, int padding)
         Matrix result = Matrix(output_size, output_size);
         for (int i=0; i<depth; i++){
             Matrix filter = setOfFilters.getFilter(filterNumber).getLayer(i);
-			Matrix result_depth_i = layers[i].filterSlide(filter, stride, bias, padding);
+            Matrix result_depth_i = layers[i].filterSlide(filter, stride, bias, padding);
             result.add(result_depth_i);
         }
 
@@ -138,6 +150,103 @@ Tensor Tensor::fwdConv(Filters setOfFilters, int stride, int bias, int padding)
         }
 
         outputVolume.addLayer(result);                
+    }
+
+    return outputVolume;
+}
+
+double Tensor::kernel(double* A, double* B, int y, int x, int z, int F, int f_W_padded)
+{
+    double output = 0;
+
+    for (int k = 0; k < depth; k++) {
+        for (int i = y; i < (y+F); i++) {
+            for (int j = x; j < (x+F); j++) {
+                double a = A[f_W_padded*f_W_padded*k + f_W_padded*i + j];
+                double b = B[F*F*depth*z + F*F*k + F*(i-y) + (j-x)];
+                output += a*b;
+            }
+        }
+    }
+
+    return output;
+}
+
+Tensor Tensor::fwdConv_baseline(Filters setOfFilters, int stride, int bias, int padding)
+{
+    int F = setOfFilters.getWidth(); // filter_size
+    float f_W = (float)width;
+    float f_F = (float)F;
+    float f_S = (float)stride;
+    float f_P = (float)padding;
+    int output_size = ceil((f_W-f_F+2*f_P)/f_S)+1;
+
+    if (output_size < 1)
+        throw logic_error("Invalid: Output matrix size 0.");    
+    
+    Tensor outputVolume = Tensor(output_size, output_size);
+
+    int numberOfFilters = setOfFilters.getNumberOfFilters();
+
+    // A
+    int f_W_padded = f_W+2*f_P;
+    double* inputs = new double[depth*f_W_padded*f_W_padded];
+
+    for (int k = 0; k < depth; k++) {
+        std::vector<std::vector<double>> padded_matrix;
+        if (padding > 0) {
+            padded_matrix = layers[k].getPadMatrix(padding);
+        } else {
+            padded_matrix = layers[k].matrix;
+        }
+
+        for (int i = 0; i < f_W_padded; i++) {
+            for (int j = 0; j < f_W_padded; j++) {
+                inputs[f_W_padded*f_W_padded*k + f_W_padded*i + j] = (double)padded_matrix[i][j];
+            }
+        }
+    }
+
+    // B
+    double* filters = new double[numberOfFilters*depth*F*F]; // 64x3x3x3
+    for (int l = 0; l < numberOfFilters; l++) {
+        for (int k = 0; k < depth; k++) {
+            Matrix filter = setOfFilters.getFilter(l).getLayer(k);
+
+            for (int i = 0; i < F; i++) {
+                for (int j = 0; j < F; j++) {
+                    filters[F*F*depth*l + F*F*k + F*i + j] = (double)filter.getIndexValue(i, j); // matrix[i][j]
+                }
+            }
+        }
+    }
+
+    unsigned long long t0, t1;
+
+    // C
+    double* flatten_output_tensor = new double[output_size*output_size*numberOfFilters]; // 224x224x64
+    t0 = rdtsc();
+    for (int y = 0; y < output_size; y++) {
+        for (int x = 0; x < output_size; x++) {
+            for (int z = 0; z < numberOfFilters; z++) {
+                flatten_output_tensor[numberOfFilters*output_size*y + numberOfFilters*x + z] = kernel(inputs, filters, y, x, z, F, f_W_padded);
+            }
+        }
+    }
+    t1 = rdtsc();
+    printf("TURBO Cycles Taken for Baseline: %lf\n\r", (double)(t1-t0)*MAX_FREQ/BASE_FREQ);
+
+    // unpack C
+    for (int z = 0; z < numberOfFilters; z++) {
+        Matrix result = Matrix(output_size, output_size);
+
+        for (int y = 0; y < output_size; y++) {
+            for (int x = 0; x < output_size; x++) {
+                result.matrix[y][x] = flatten_output_tensor[numberOfFilters*output_size*y + numberOfFilters*x + z];
+            }
+        }
+
+        outputVolume.addLayer(result);
     }
 
     return outputVolume;
