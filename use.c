@@ -28,7 +28,7 @@ void test_7x7_Conv() {
     cout << "---- Test [Fwd Convolution] ----" << endl;
 
     Tensor conv_layer_2 = conv_layer_1.fwdConv(kernel_1, 2, 0);
-    conv_layer_1.SIMD(kernel_1,2,0);
+    //conv_layer_1.SIMD(kernel_1,2,0);
     //Tensor conv_layer_2_test = conv_layer_1.SIMD(kernel_1, 2, 0);
     cout << "\n[Input volume]: 7x7x3 --> Convolution (filter: 3x3x3 * 16 @ stride=2) --> [Output volume]: "
          << conv_layer_2.getHeight() << "x"
@@ -128,7 +128,32 @@ void test_227x227_Conv_MaxPool() {
          << max_pool_layer_1.getDepth() << endl;
     cout << "\n___________________Test End_________________________\n" << endl;
 }
+void test_filter_refactor(double* input, double* filter_packed,int height, int weight, int depth, int filter_height, int filter_weight,int filter_depth, int filter_num){
+    int input_size = height * weight * depth;
+    int filter_size = filter_depth * filter_height * filter_weight;
 
+    int round = filter_num / 4;
+    int filter_index = 0;
+    double* simd = new double [4];
+
+    double *output = new double ();
+
+
+}
+
+double* pack_filter(double* filter1, double *filter2, double *filter3, double *filter4,int height, int weight, int depth ){
+    int size = height*weight*depth;
+    double* output = new double (4*size);
+    for(int i = 0; i < size; i++){
+        output[i*4]=filter1[i];
+        output[i*4+1]=filter2[i];
+        output[i*4+2]=filter3[i];
+        output[i*4+3]=filter4[i];
+
+    }
+    return output;
+
+}
 int main(int argc, char* argv[]) {
     srand(time(0)); //used for setting random values for filters
     test_7x7_Conv();
