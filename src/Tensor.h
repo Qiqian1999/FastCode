@@ -32,6 +32,15 @@ public:
 	Tensor fwdConv(Filters setOfFilters, int stride, int bias, int padding);
 >>>>>>> bfad8d62b9b2828fe4abe55c10c5b88e8aae4ceb:src/Tensor.h
 	Tensor fwdMaxPool(int pool_filter_height, int pool_filter_width, int stride, int bias);
+
+	double kernel(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters);
+	double kernel_simd(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters);
+	Tensor fwdConv_baseline(Filters setOfFilters, int stride, int bias, int padding);
+	Tensor fwdConv_simd(Filters setOfFilters, int stride, int bias, int padding);
+
+	void pack_inputs(double* inputs, int padding, int f_W_padded);
+	void pack_filters(double* filters, Filters setOfFilters, int numberOfFilters, int F);
+
 protected:
 	int height;
 	int width;
