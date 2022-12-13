@@ -188,20 +188,34 @@ double Tensor::kernel_simd(double* C, double* A, double* B, int F, int f_W_padde
     t0 = rdtsc();
     for (int y = 0; y < output_size; y++) {
         for (int x = 0; x < output_size; x++) {
-            for (int z = 0; z < numberOfFilters; z++) {
-                double output = 0;
+            for (int z = 0; z < numberOfFilters; z += 4) {
+                double output1 = 0;
+                double output2 = 0;
+                double output3 = 0;
+                double output4 = 0;
 
                 for (int k = 0; k < depth; k++) {
                     for (int i = y; i < (y+F); i++) {
                         for (int j = x; j < (x+F); j++) {
                             double a = A[f_W_padded*f_W_padded*k + f_W_padded*i + j];
-                            double b = B[F*F*depth*z + F*F*k + F*(i-y) + (j-x)];
-                            output += a*b;
+
+                            double b1 = B[F*F*depth*z + F*F*k + F*(i-y) + (j-x)];
+                            double b2 = B[F*F*depth*(z+1) + F*F*k + F*(i-y) + (j-x)];
+                            double b3 = B[F*F*depth*(z+2) + F*F*k + F*(i-y) + (j-x)];
+                            double b4 = B[F*F*depth*(z+3) + F*F*k + F*(i-y) + (j-x)];
+
+                            output1 += a*b1;
+                            output2 += a*b2;
+                            output3 += a*b3;
+                            output4 += a*b4;
                         }
                     }
                 }
 
-                C[numberOfFilters*output_size*y + numberOfFilters*x + z] = output;
+                C[numberOfFilters*output_size*y + numberOfFilters*x + z] = output1;
+                C[numberOfFilters*output_size*y + numberOfFilters*x + (z+1)] = output2;
+                C[numberOfFilters*output_size*y + numberOfFilters*x + (z+2)] = output3;
+                C[numberOfFilters*output_size*y + numberOfFilters*x + (z+3)] = output4;
             }
         }
     }
