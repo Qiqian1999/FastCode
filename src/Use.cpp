@@ -11,6 +11,40 @@
 
 using namespace std;
 
+void test_pack_filters(){
+    // 224x224x3 input layer
+    Tensor data_layer = Tensor(64, 64);
+    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_64x64"));
+    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_64x64"));
+    data_layer.addLayer(Utility::createMatrixFromFile("layers/input_layer_64x64"));
+
+    // // 3x3x3 x 64 filters
+    Filters kernel_conv1_1 = Filters(3, 3, 3, 64);
+
+    cout << "______test_224x224_Conv Test Start_______________________\n" << endl;
+    cout << "---- Test [Fwd Convolution] ----" << endl;
+
+    double* output = new double[3*3*3*64];
+
+    data_layer.pack_filters(output,kernel_conv1_1,64,3);
+
+    for(int i = 0; i < 4; i++){
+        cout<<"---this is the "<<i<< "kernel----"<<endl;
+        for(int j = 0; j < 3; j++){
+            Matrix matrix = kernel_conv1_1.getFilter(i).getLayer(j);
+            cout<<matrix.getIndexValue(0,0)<<matrix.getIndexValue(0,1)<<matrix.getIndexValue(0,2)<<endl;
+            cout<<matrix.getIndexValue(1,0)<<matrix.getIndexValue(1,1)<<matrix.getIndexValue(1,2)<<endl;
+            cout<<matrix.getIndexValue(2,0)<<matrix.getIndexValue(2,1)<<matrix.getIndexValue(2,2)<<endl;
+        }
+        
+        
+    }
+    cout<<"---this is the output----"<<endl;
+    for(int i = 0; i<27; i++){
+        cout<<output[i*4]<<output[i*4+1]<<output[i*4+2]<<output[i*4+3]<<endl;
+    }
+}
+
 //Testing convolution on 224x224x3 Tensor with 64 filters: 3x3x3 and stride 1, pad 1
 void test_224x224_Conv() {
     int padding = 1;
@@ -75,6 +109,7 @@ void test_224x224_Conv() {
 int main(int argc, char* argv[]) {
     // srand(time(0)); //used for setting random values for filters
     srand(1); //used for setting random values for filters
-    test_224x224_Conv();
+    //test_224x224_Conv();
+    test_pack_filters();
     return 0;
 }	
