@@ -35,12 +35,14 @@ public:
 	Matrix filterSlide(Matrix filter, int stride, int bias, int padding);
 >>>>>>> bfad8d62b9b2828fe4abe55c10c5b88e8aae4ceb:src/Matrix.h
 	Matrix maxSlide(int H, int F, int stride, int bias);
+
+	std::vector<std::vector<double>> getPadMatrix(int padding);
+
 private:
 	int height;
 	int width;
 	int padding;
 	void padMatrix();
-	std::vector<std::vector<double>> getPadMatrix(int padding);
 };
 
 #endif 
