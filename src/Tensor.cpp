@@ -209,7 +209,7 @@ double Tensor::kernel_simd(double* C, double* A, double* B, int F, int f_W_padde
         }
     }
     t1 = rdtsc();
-    printf("TURBO Cycles Taken for Baseline: %lf\n\r", (double)(t1-t0)*MAX_FREQ/BASE_FREQ);
+    printf("TURBO Cycles Taken for SIMD: %lf\n\r", (double)(t1-t0)*MAX_FREQ/BASE_FREQ);
 }
 
 void Tensor::pack_inputs(double* inputs, int padding, int f_W_padded)
