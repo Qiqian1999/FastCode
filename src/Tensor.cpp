@@ -232,8 +232,6 @@ void Tensor::pack_inputs(double* inputs, int padding, int f_W_padded)
 
 void Tensor::pack_filters(double* filters, Filters setOfFilters, int numberOfFilters, int F)
 {
-    
-
     for (int l = 0; l < numberOfFilters/4; l++) {
         for (int k = 0; k < depth; k++) {
             Matrix filter1 = setOfFilters.getFilter(l*4).getLayer(k);
