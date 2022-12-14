@@ -240,6 +240,50 @@ double Tensor::kernel_simd(double* C, double* A, double* B, int F, int f_W_padde
     printf("TURBO Cycles Taken for SIMD: %lf\n\r", (double)(t1-t0)*MAX_FREQ/BASE_FREQ);
 }
 
+double Tensor::kernel_simd_openmp(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters)
+{
+    unsigned long long t0, t1, t3, t4;
+    __m256d a;
+    __m256d b;
+
+    t0 = rdtsc();
+    for (int y = 0; y < output_size; y++) {
+        for (int x = 0; x < output_size; x++) {
+            for (int z = 0; z < numberOfFilters; z += 4) {
+                __m256d output = _mm256_setzero_pd();
+
+                for (int k = 0; k < depth; k++) {
+                    for (int i = y; i < (y+F); i++) {
+                        for (int j = x; j < (x+F); j++) {
+                            t3 = rdtsc();
+                            a = _mm256_broadcast_sd(A + (f_W_padded*f_W_padded*k + f_W_padded*i + j));
+                            t4 = rdtsc();
+                            // printf("_mm256_broadcast_sd: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
+
+                            t3 = rdtsc();
+                            b = _mm256_load_pd(B + (F*F*depth*z*4 + F*F*k*4 + F*(i-y)*4 + (j-x)*4));
+                            t4 = rdtsc();
+                            // printf("_mm256_load_pd: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
+
+                            t3 = rdtsc();
+                            output = _mm256_fmadd_pd(a, b, output);
+                            t4 = rdtsc();
+                            // printf("_mm256_fmadd_pd: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
+                        }
+                    }
+                }
+
+                t3 = rdtsc();
+                _mm256_store_pd(C + (numberOfFilters*output_size*y + numberOfFilters*x + z), output);
+                t4 = rdtsc();
+                // printf("_mm256_store_pd: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
+            }
+        }
+    }
+    t1 = rdtsc();
+    printf("TURBO Cycles Taken for SIMD+OpenMP: %lf\n\r", (double)(t1-t0)*MAX_FREQ/BASE_FREQ);
+}
+
 void Tensor::pack_inputs(double* inputs, int padding, int f_W_padded)
 {
     for (int k = 0; k < depth; k++) {
@@ -258,7 +302,46 @@ void Tensor::pack_inputs(double* inputs, int padding, int f_W_padded)
     }
 }
 
+void Tensor::pack_inputs_openmp(double* inputs, int padding, int f_W_padded)
+{
+    for (int k = 0; k < depth; k++) {
+        std::vector<std::vector<double>> padded_matrix;
+        if (padding > 0) {
+            padded_matrix = layers[k].getPadMatrix(padding);
+        } else {
+            padded_matrix = layers[k].matrix;
+        }
+
+        for (int i = 0; i < f_W_padded; i++) {
+            for (int j = 0; j < f_W_padded; j++) {
+                inputs[f_W_padded*f_W_padded*k + f_W_padded*i + j] = (double)padded_matrix[i][j];
+            }
+        }
+    }
+}
+
 void Tensor::pack_filters(double* filters, Filters setOfFilters, int numberOfFilters, int F)
+{
+    for (int l = 0; l < numberOfFilters/4; l++) {
+        for (int k = 0; k < depth; k++) {
+            Matrix filter1 = setOfFilters.getFilter(l*4).getLayer(k);
+            Matrix filter2 = setOfFilters.getFilter(l*4+1).getLayer(k);
+            Matrix filter3 = setOfFilters.getFilter(l*4+2).getLayer(k);
+            Matrix filter4 = setOfFilters.getFilter(l*4+3).getLayer(k);
+
+            for (int i = 0; i < F; i++) {
+                for (int j = 0; j < F; j++) {
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4] = (double)filter1.getIndexValue(i, j); // matrix[i][j]
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+1] = (double)filter2.getIndexValue(i, j); // matrix[i][j]
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+2] = (double)filter3.getIndexValue(i, j); // matrix[i][j]
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+3] = (double)filter4.getIndexValue(i, j); // matrix[i][j]
+                }
+            }
+        }
+    }
+}
+
+void Tensor::pack_filters_openmp(double* filters, Filters setOfFilters, int numberOfFilters, int F)
 {
     for (int l = 0; l < numberOfFilters/4; l++) {
         for (int k = 0; k < depth; k++) {
@@ -381,6 +464,55 @@ Tensor Tensor::fwdConv_simd(Filters setOfFilters, int stride, int bias, int padd
     posix_memalign((void**) &flatten_output_tensor, 64, output_size*output_size*numberOfFilters*sizeof(double));
 
     kernel_simd(flatten_output_tensor, inputs, filters, F, f_W_padded, output_size, numberOfFilters);
+
+    // unpack C
+    for (int z = 0; z < numberOfFilters; z++) {
+        Matrix result = Matrix(output_size, output_size);
+
+        for (int y = 0; y < output_size; y++) {
+            for (int x = 0; x < output_size; x++) {
+                result.matrix[y][x] = flatten_output_tensor[numberOfFilters*output_size*y + numberOfFilters*x + z];
+            }
+        }
+
+        outputVolume.addLayer(result);
+    }
+
+    return outputVolume;
+}
+
+Tensor Tensor::fwdConv_simd_openmp(Filters setOfFilters, int stride, int bias, int padding)
+{
+    int F = setOfFilters.getWidth(); // filter_size
+    float f_W = (float)width;
+    float f_F = (float)F;
+    float f_S = (float)stride;
+    float f_P = (float)padding;
+    int output_size = ceil((f_W-f_F+2*f_P)/f_S)+1;
+
+    if (output_size < 1)
+        throw logic_error("Invalid: Output matrix size 0.");    
+    
+    Tensor outputVolume = Tensor(output_size, output_size);
+
+    int numberOfFilters = setOfFilters.getNumberOfFilters();
+
+    // A
+    int f_W_padded = f_W+2*f_P;
+    double* inputs;
+    posix_memalign((void**) &inputs, 64, depth*f_W_padded*f_W_padded*sizeof(double));
+    pack_inputs_openmp(inputs, padding, f_W_padded);
+
+    // B
+    double* filters;
+    posix_memalign((void**) &filters, 64, numberOfFilters*depth*F*F*sizeof(double));
+    pack_filters_openmp(filters, setOfFilters, numberOfFilters, F);
+
+    // C
+    double* flatten_output_tensor;
+    posix_memalign((void**) &flatten_output_tensor, 64, output_size*output_size*numberOfFilters*sizeof(double));
+
+    kernel_simd_openmp(flatten_output_tensor, inputs, filters, F, f_W_padded, output_size, numberOfFilters);
 
     // unpack C
     for (int z = 0; z < numberOfFilters; z++) {
