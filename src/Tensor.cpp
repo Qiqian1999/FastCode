@@ -4,6 +4,7 @@
 #include <cmath>
 #include "Filters.h"
 #include "Tensor.h"
+#include <omp.h>
 
 #include <x86intrin.h>
 #include <immintrin.h>
@@ -252,6 +253,8 @@ double Tensor::kernel_simd_openmp(double* C, double* A, double* B, int F, int f_
             for (int z = 0; z < numberOfFilters; z += 4) {
                 __m256d output = _mm256_setzero_pd();
 
+                omp_set_num_threads(omp_get_max_threads());
+                #pragma omp parallel for reduction(+:output)
                 for (int k = 0; k < depth; k++) {
                     for (int i = y; i < (y+F); i++) {
                         for (int j = x; j < (x+F); j++) {
@@ -272,6 +275,7 @@ double Tensor::kernel_simd_openmp(double* C, double* A, double* B, int F, int f_
                         }
                     }
                 }
+                #pragma omp barrier
 
                 t3 = rdtsc();
                 _mm256_store_pd(C + (numberOfFilters*output_size*y + numberOfFilters*x + z), output);
@@ -304,20 +308,26 @@ void Tensor::pack_inputs(double* inputs, int padding, int f_W_padded)
 
 void Tensor::pack_inputs_openmp(double* inputs, int padding, int f_W_padded)
 {
+    omp_set_num_threads(4);
+    #pragma omp parallel for
     for (int k = 0; k < depth; k++) {
         std::vector<std::vector<double>> padded_matrix;
-        if (padding > 0) {
+        #pragma omp critical
+        {
+            if (padding > 0) {
             padded_matrix = layers[k].getPadMatrix(padding);
-        } else {
+            } else {
             padded_matrix = layers[k].matrix;
-        }
+            }
 
+        }
         for (int i = 0; i < f_W_padded; i++) {
             for (int j = 0; j < f_W_padded; j++) {
                 inputs[f_W_padded*f_W_padded*k + f_W_padded*i + j] = (double)padded_matrix[i][j];
             }
         }
     }
+    
 }
 
 void Tensor::pack_filters(double* filters, Filters setOfFilters, int numberOfFilters, int F)
@@ -328,7 +338,7 @@ void Tensor::pack_filters(double* filters, Filters setOfFilters, int numberOfFil
             Matrix filter2 = setOfFilters.getFilter(l*4+1).getLayer(k);
             Matrix filter3 = setOfFilters.getFilter(l*4+2).getLayer(k);
             Matrix filter4 = setOfFilters.getFilter(l*4+3).getLayer(k);
-
+            
             for (int i = 0; i < F; i++) {
                 for (int j = 0; j < F; j++) {
                     filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4] = (double)filter1.getIndexValue(i, j); // matrix[i][j]
@@ -349,15 +359,50 @@ void Tensor::pack_filters_openmp(double* filters, Filters setOfFilters, int numb
             Matrix filter2 = setOfFilters.getFilter(l*4+1).getLayer(k);
             Matrix filter3 = setOfFilters.getFilter(l*4+2).getLayer(k);
             Matrix filter4 = setOfFilters.getFilter(l*4+3).getLayer(k);
-
-            for (int i = 0; i < F; i++) {
-                for (int j = 0; j < F; j++) {
+            omp_set_num_threads(4);
+            #pragma omp parallel sections
+            {
+                #pragma omp section
+                {
+                    for (int i = 0; i < F; i++) {
+                        for (int j = 0; j < F; j++) {
                     filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4] = (double)filter1.getIndexValue(i, j); // matrix[i][j]
-                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+1] = (double)filter2.getIndexValue(i, j); // matrix[i][j]
-                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+2] = (double)filter3.getIndexValue(i, j); // matrix[i][j]
-                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+3] = (double)filter4.getIndexValue(i, j); // matrix[i][j]
+                        }
+                    }
                 }
+                #pragma omp section
+                {
+                    for (int i = 0; i < F; i++) {
+                        for (int j = 0; j < F; j++) {
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+1] = (double)filter2.getIndexValue(i, j); // matrix[i][j]
+                        }
+                    }
+                }  
+                #pragma omp section
+                {
+                    for (int i = 0; i < F; i++) {
+                        for (int j = 0; j < F; j++) {
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+2] = (double)filter3.getIndexValue(i, j); // matrix[i][j]
+                        }
+                    }
+                }  
+                #pragma omp section
+                {
+                    for (int i = 0; i < F; i++) {
+                        for (int j = 0; j < F; j++) {
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+3] = (double)filter4.getIndexValue(i, j); // matrix[i][j]
+                        }
+                    }
+                }      
             }
+            // for (int i = 0; i < F; i++) {
+            //     for (int j = 0; j < F; j++) {
+            //         filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4] = (double)filter1.getIndexValue(i, j); // matrix[i][j]
+            //         filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+1] = (double)filter2.getIndexValue(i, j); // matrix[i][j]
+            //         filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+2] = (double)filter3.getIndexValue(i, j); // matrix[i][j]
+            //         filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+3] = (double)filter4.getIndexValue(i, j); // matrix[i][j]
+            //     }
+            // }
         }
     }
 }
@@ -517,7 +562,8 @@ Tensor Tensor::fwdConv_simd_openmp(Filters setOfFilters, int stride, int bias, i
     // unpack C
     for (int z = 0; z < numberOfFilters; z++) {
         Matrix result = Matrix(output_size, output_size);
-
+        // omp_set_num_threads(2);
+        #pragma omp simd collapse(2)
         for (int y = 0; y < output_size; y++) {
             for (int x = 0; x < output_size; x++) {
                 result.matrix[y][x] = flatten_output_tensor[numberOfFilters*output_size*y + numberOfFilters*x + z];
