@@ -185,37 +185,26 @@ double Tensor::kernel(double* C, double* A, double* B, int F, int f_W_padded, in
 double Tensor::kernel_simd(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters)
 {
     unsigned long long t0, t1;
+    __m256d a;
+    __m256d b;
+
     t0 = rdtsc();
     for (int y = 0; y < output_size; y++) {
         for (int x = 0; x < output_size; x++) {
             for (int z = 0; z < numberOfFilters; z += 4) {
-                double output1 = 0;
-                double output2 = 0;
-                double output3 = 0;
-                double output4 = 0;
+                __m256d output = _mm256_setzero_pd();
 
                 for (int k = 0; k < depth; k++) {
                     for (int i = y; i < (y+F); i++) {
                         for (int j = x; j < (x+F); j++) {
-                            double a = A[f_W_padded*f_W_padded*k + f_W_padded*i + j];
-
-                            double b1 = B[F*F*depth*z + F*F*k + F*(i-y) + (j-x)];
-                            double b2 = B[F*F*depth*(z+1) + F*F*k + F*(i-y) + (j-x)];
-                            double b3 = B[F*F*depth*(z+2) + F*F*k + F*(i-y) + (j-x)];
-                            double b4 = B[F*F*depth*(z+3) + F*F*k + F*(i-y) + (j-x)];
-
-                            output1 += a*b1;
-                            output2 += a*b2;
-                            output3 += a*b3;
-                            output4 += a*b4;
+                            a = _mm256_broadcast_sd(A + (f_W_padded*f_W_padded*k + f_W_padded*i + j));
+                            b = _mm256_load_pd(B + (F*F*depth*z*4 + F*F*k*4 + F*(i-y)*4 + (j-x)*4));
+                            output = _mm256_fmadd_pd(a, b, output);
                         }
                     }
                 }
 
-                C[numberOfFilters*output_size*y + numberOfFilters*x + z] = output1;
-                C[numberOfFilters*output_size*y + numberOfFilters*x + (z+1)] = output2;
-                C[numberOfFilters*output_size*y + numberOfFilters*x + (z+2)] = output3;
-                C[numberOfFilters*output_size*y + numberOfFilters*x + (z+3)] = output4;
+                _mm256_store_pd(C + (numberOfFilters*output_size*y + numberOfFilters*x + z), output);
             }
         }
     }
@@ -344,15 +333,18 @@ Tensor Tensor::fwdConv_simd(Filters setOfFilters, int stride, int bias, int padd
 
     // A
     int f_W_padded = f_W+2*f_P;
-    double* inputs = new double[depth*f_W_padded*f_W_padded];
+    double* inputs;
+    posix_memalign((void**) &inputs, 64, depth*f_W_padded*f_W_padded*sizeof(double));
     pack_inputs(inputs, padding, f_W_padded);
 
     // B
-    double* filters = new double[numberOfFilters*depth*F*F]; // 64x3x3x3
+    double* filters;
+    posix_memalign((void**) &filters, 64, numberOfFilters*depth*F*F*sizeof(double));
     pack_filters(filters, setOfFilters, numberOfFilters, F);
 
     // C
-    double* flatten_output_tensor = new double[output_size*output_size*numberOfFilters]; // 224x224x64
+    double* flatten_output_tensor;
+    posix_memalign((void**) &flatten_output_tensor, 64, output_size*output_size*numberOfFilters*sizeof(double));
 
     kernel_simd(flatten_output_tensor, inputs, filters, F, f_W_padded, output_size, numberOfFilters);
 
