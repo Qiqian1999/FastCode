@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-g -std=c++11 -mfma -mavx2 -mavx -Wall -pedantic
+CXXFLAGS=-g -O3 -std=c++11 -mfma -mavx2 -mavx -Wall -pedantic
 
 BIN=run
 

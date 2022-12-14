@@ -157,7 +157,7 @@ Tensor Tensor::fwdConv(Filters setOfFilters, int stride, int bias, int padding)
 
 double Tensor::kernel(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters)
 {
-    unsigned long long t0, t1;
+    unsigned long long t0, t1, t3, t4;
     t0 = rdtsc();
     for (int y = 0; y < output_size; y++) {
         for (int x = 0; x < output_size; x++) {
@@ -167,14 +167,28 @@ double Tensor::kernel(double* C, double* A, double* B, int F, int f_W_padded, in
                 for (int k = 0; k < depth; k++) {
                     for (int i = y; i < (y+F); i++) {
                         for (int j = x; j < (x+F); j++) {
+                            t3 = rdtsc();
                             double a = A[f_W_padded*f_W_padded*k + f_W_padded*i + j];
+                            t4 = rdtsc();
+                            // printf("load a: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
+
+                            t3 = rdtsc();
                             double b = B[F*F*depth*z + F*F*k + F*(i-y) + (j-x)];
+                            t4 = rdtsc();
+                            // printf("load b: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
+
+                            t3 = rdtsc();
                             output += a*b;
+                            t4 = rdtsc();
+                            // printf("output += a*b: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
                         }
                     }
                 }
 
+                t3 = rdtsc();
                 C[numberOfFilters*output_size*y + numberOfFilters*x + z] = output;
+                t4 = rdtsc();
+                // printf("save C: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
             }
         }
     }
@@ -184,7 +198,7 @@ double Tensor::kernel(double* C, double* A, double* B, int F, int f_W_padded, in
 
 double Tensor::kernel_simd(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters)
 {
-    unsigned long long t0, t1;
+    unsigned long long t0, t1, t3, t4;
     __m256d a;
     __m256d b;
 
@@ -197,14 +211,28 @@ double Tensor::kernel_simd(double* C, double* A, double* B, int F, int f_W_padde
                 for (int k = 0; k < depth; k++) {
                     for (int i = y; i < (y+F); i++) {
                         for (int j = x; j < (x+F); j++) {
+                            t3 = rdtsc();
                             a = _mm256_broadcast_sd(A + (f_W_padded*f_W_padded*k + f_W_padded*i + j));
+                            t4 = rdtsc();
+                            // printf("_mm256_broadcast_sd: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
+
+                            t3 = rdtsc();
                             b = _mm256_load_pd(B + (F*F*depth*z*4 + F*F*k*4 + F*(i-y)*4 + (j-x)*4));
+                            t4 = rdtsc();
+                            // printf("_mm256_load_pd: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
+
+                            t3 = rdtsc();
                             output = _mm256_fmadd_pd(a, b, output);
+                            t4 = rdtsc();
+                            // printf("_mm256_fmadd_pd: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
                         }
                     }
                 }
 
+                t3 = rdtsc();
                 _mm256_store_pd(C + (numberOfFilters*output_size*y + numberOfFilters*x + z), output);
+                t4 = rdtsc();
+                // printf("_mm256_store_pd: %lf\n\r", (double)(t4-t3)*MAX_FREQ/BASE_FREQ);
             }
         }
     }
