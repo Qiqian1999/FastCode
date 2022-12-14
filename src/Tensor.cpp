@@ -232,13 +232,21 @@ void Tensor::pack_inputs(double* inputs, int padding, int f_W_padded)
 
 void Tensor::pack_filters(double* filters, Filters setOfFilters, int numberOfFilters, int F)
 {
-    for (int l = 0; l < numberOfFilters; l++) {
+    
+
+    for (int l = 0; l < numberOfFilters/4; l++) {
         for (int k = 0; k < depth; k++) {
-            Matrix filter = setOfFilters.getFilter(l).getLayer(k);
+            Matrix filter1 = setOfFilters.getFilter(l*4).getLayer(k);
+            Matrix filter2 = setOfFilters.getFilter(l*4+1).getLayer(k);
+            Matrix filter3 = setOfFilters.getFilter(l*4+2).getLayer(k);
+            Matrix filter4 = setOfFilters.getFilter(l*4+3).getLayer(k);
 
             for (int i = 0; i < F; i++) {
                 for (int j = 0; j < F; j++) {
-                    filters[F*F*depth*l + F*F*k + F*i + j] = (double)filter.getIndexValue(i, j); // matrix[i][j]
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4] = (double)filter1.getIndexValue(i, j); // matrix[i][j]
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+1] = (double)filter2.getIndexValue(i, j); // matrix[i][j]
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+2] = (double)filter3.getIndexValue(i, j); // matrix[i][j]
+                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+3] = (double)filter4.getIndexValue(i, j); // matrix[i][j]
                 }
             }
         }

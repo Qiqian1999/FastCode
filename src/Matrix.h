@@ -28,6 +28,8 @@ public:
 	void add(Matrix other);
 	void print() const;
 	Matrix filterSlide(Matrix filter, int stride, int bias);
+    Matrix filterSlideSimd(Matrix filter1, Matrix filter2, Matrix filter3, Matrix filter4, int stride, int bias);
+    double* singleElement(Matrix filter1, Matrix filter2, Matrix filter3, Matrix filter4, int startX, int startY);
 	Matrix filterSlide(Matrix filter, int stride, int bias, int padding);
 	Matrix maxSlide(int H, int F, int stride, int bias);
 
