@@ -109,7 +109,7 @@ void test_224x224_Conv() {
 int main(int argc, char* argv[]) {
     // srand(time(0)); //used for setting random values for filters
     srand(1); //used for setting random values for filters
-    //test_224x224_Conv();
-    test_pack_filters();
+    test_224x224_Conv();
+    // test_pack_filters();
     return 0;
 }	
