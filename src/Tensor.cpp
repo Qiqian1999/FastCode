@@ -366,7 +366,7 @@ void Tensor::pack_filters_openmp(double* filters, Filters setOfFilters, int numb
                 {
                     for (int i = 0; i < F; i++) {
                         for (int j = 0; j < F; j++) {
-                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4] = (double)filter1.getIndexValue(i, j); // matrix[i][j]
+                            filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4] = (double)filter1.getIndexValue(i, j); // matrix[i][j]
                         }
                     }
                 }
@@ -374,7 +374,7 @@ void Tensor::pack_filters_openmp(double* filters, Filters setOfFilters, int numb
                 {
                     for (int i = 0; i < F; i++) {
                         for (int j = 0; j < F; j++) {
-                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+1] = (double)filter2.getIndexValue(i, j); // matrix[i][j]
+                            filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+1] = (double)filter2.getIndexValue(i, j); // matrix[i][j]
                         }
                     }
                 }  
@@ -382,7 +382,7 @@ void Tensor::pack_filters_openmp(double* filters, Filters setOfFilters, int numb
                 {
                     for (int i = 0; i < F; i++) {
                         for (int j = 0; j < F; j++) {
-                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+2] = (double)filter3.getIndexValue(i, j); // matrix[i][j]
+                            filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+2] = (double)filter3.getIndexValue(i, j); // matrix[i][j]
                         }
                     }
                 }  
@@ -390,7 +390,7 @@ void Tensor::pack_filters_openmp(double* filters, Filters setOfFilters, int numb
                 {
                     for (int i = 0; i < F; i++) {
                         for (int j = 0; j < F; j++) {
-                    filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+3] = (double)filter4.getIndexValue(i, j); // matrix[i][j]
+                            filters[F*F*depth*l*4 + F*F*k*4 + F*i*4 + j*4+3] = (double)filter4.getIndexValue(i, j); // matrix[i][j]
                         }
                     }
                 }      
