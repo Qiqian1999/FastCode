@@ -64,8 +64,8 @@ void test_224x224_Conv() {
     cout << "---- Test [Fwd Convolution] ----" << endl;
 
     Tensor conv1_1_layer = data_layer.fwdConv(kernel_conv1_1, stride, bias, padding);
-    Tensor conv1_1_layer_baseline = data_layer.fwdConv_baseline(kernel_conv1_1, stride, bias, padding); // TURBO Cycles Taken for Baseline: 186363473.250000
-    Tensor conv1_1_layer_simd = data_layer.fwdConv_simd(kernel_conv1_1, stride, bias, padding); // 
+    Tensor conv1_1_layer_baseline = data_layer.fwdConv_baseline(kernel_conv1_1, stride, bias, padding); // TURBO Cycles Taken for Baseline: 1494804815.000000
+    Tensor conv1_1_layer_simd = data_layer.fwdConv_simd(kernel_conv1_1, stride, bias, padding); // TURBO Cycles Taken for SIMD: 484215675.000000
 
     cout << "conv1_1_layer output: " << endl;
     conv1_1_layer.getLayer(3).print();
@@ -109,7 +109,7 @@ void test_224x224_Conv() {
 int main(int argc, char* argv[]) {
     // srand(time(0)); //used for setting random values for filters
     srand(1); //used for setting random values for filters
-    //test_224x224_Conv();
-    test_pack_filters();
+    test_224x224_Conv();
+    // test_pack_filters();
     return 0;
 }	
