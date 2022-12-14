@@ -32,11 +32,15 @@ public:
 
 	double kernel(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters);
 	double kernel_simd(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters);
+	double kernel_simd_openmp(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters);
 	Tensor fwdConv_baseline(Filters setOfFilters, int stride, int bias, int padding);
 	Tensor fwdConv_simd(Filters setOfFilters, int stride, int bias, int padding);
+	Tensor fwdConv_simd_openmp(Filters setOfFilters, int stride, int bias, int padding);
 
 	void pack_inputs(double* inputs, int padding, int f_W_padded);
+	void pack_inputs_openmp(double* inputs, int padding, int f_W_padded);
 	void pack_filters(double* filters, Filters setOfFilters, int numberOfFilters, int F);
+	void pack_filters_openmp(double* filters, Filters setOfFilters, int numberOfFilters, int F);
 
 protected:
 	int height;
