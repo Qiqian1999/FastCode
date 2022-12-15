@@ -194,7 +194,7 @@ double Tensor::kernel(double* C, double* A, double* B, int F, int f_W_padded, in
         }
     }
     t1 = rdtsc();
-    printf("TURBO Cycles Taken for Baseline: %lf\n\r", (double)(t1-t0));
+    printf("Cycles Taken for Baseline: %lf\n\r", (double)(t1-t0));
 }
 
 double Tensor::kernel_simd(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters)
@@ -238,7 +238,7 @@ double Tensor::kernel_simd(double* C, double* A, double* B, int F, int f_W_padde
         }
     }
     t1 = rdtsc();
-    printf("TURBO Cycles Taken for SIMD: %lf\n\r", (double)(t1-t0));
+    printf("Cycles Taken for SIMD: %lf\n\r", (double)(t1-t0));
 }
 
 double Tensor::kernel_simd_openmp(double* C, double* A, double* B, int F, int f_W_padded, int output_size, int numberOfFilters)
@@ -285,7 +285,7 @@ double Tensor::kernel_simd_openmp(double* C, double* A, double* B, int F, int f_
         }
     }
     t1 = rdtsc();
-    printf("TURBO Cycles Taken for SIMD+OpenMP: %lf\n\r", (double)(t1-t0));
+    printf("Cycles Taken for SIMD+OpenMP: %lf\n\r", (double)(t1-t0));
 }
 
 void Tensor::pack_inputs(double* inputs, int padding, int f_W_padded)
