@@ -12,3 +12,4 @@ Whichever you wanna see the result, just remove the comment and compile it with 
 Makefile: make -> compile all the code
           make clean -> clean all the result
 
+Our code could run on ECE cluster machines
