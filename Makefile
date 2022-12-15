@@ -1,13 +1,13 @@
 CXX=g++
-CXXFLAGS=-g -std=c++11 -Wall -pedantic
+CXXFLAGS=-g -O3 -std=c++11 -mfma -mavx2 -mavx -Wall -pedantic 
 
 BIN=run
 
-SRC=$(wildcard src/*.cpp)
+SRC=$(wildcard *.cpp)
 OBJ=$(SRC:%.cpp=%.o)
 
 all: $(OBJ)
-	    $(CXX) -o $(BIN) $^
+	    $(CXX) -o $(BIN) $^ -fopenmp
 
 %.o: %.c
 	    $(CXX) $@ -c $<
